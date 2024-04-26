@@ -75,13 +75,16 @@ def set_member(msg: typing.Any, member: str, value: typing.Any) -> None:
 class JoyTeleopCommand:
 
     def __init__(self, name: str, config: typing.Dict[str, typing.Any],
-                 button_name: str, axes_name: str) -> None:
+                 button_name: str, axes_name: str, node : Node) -> None:
         self.buttons: typing.List[str] = []
+        self.node = node
         if button_name in config:
-            self.buttons = config[button_name]
+            self.buttons = [0] * len(config[button_name])
+            self.buttons_prev_val = config[button_name]
         self.axes: typing.List[str] = []
         if axes_name in config:
             self.axes = config[axes_name]
+            self.axes_prev_val = [0.0] * len(config[axes_name])
 
         if len(self.buttons) == 0 and len(self.axes) == 0:
             raise JoyTeleopException("No buttons or axes configured for command '{}'".format(name))
@@ -93,32 +96,42 @@ class JoyTeleopCommand:
         self.min_axis = 0
         if len(self.axes) > 0:
             self.min_axis = int(min(self.axes))
-
+        
         # This can be used to "debounce" the message; if there are multiple presses of the buttons
         # or axes, the command may only activate on the first one until it toggles again.  But this
         # is a command-specific behavior, the base class only provides the mechanism.
         self.active = False
 
     def update_active_from_buttons_and_axes(self, joy_state: sensor_msgs.msg.Joy) -> None:
-        self.active = True
-
+        self.active = False
+    
         if (self.min_button is not None and len(joy_state.buttons) <= self.min_button) and \
            (self.min_axis is not None and len(joy_state.axes) <= self.min_axis):
             # Not enough buttons or axes, so it can't possibly be a message for this command.
+            self.node.get_logger("Not enough buttons or axes")
             return
 
         for button in self.buttons:
+            ## if any button changes value
             try:
-                self.active &= joy_state.buttons[button] == 1
+                if joy_state.buttons[button] !=  self.buttons_prev_val[button]:
+                    self.active = True 
+                self.buttons_prev_val[button] = joy_state.buttons[button]
             except IndexError:
                 # An index error can occur if this command is configured for multiple buttons
                 # like (0, 10), but the length of the joystick buttons is only 1.  Ignore these.
                 pass
 
         for axis in self.axes:
+            # if any axis changes value
             try:
-                self.active &= joy_state.axes[axis] == 1.0
+                if self.axes_prev_val[axis] != joy_state.axes[axis] and abs(joy_state.axes[axis]) != 0.0:
+                    self.active = True
+                #else:
+                #    self.node.get_logger().info("Axes nothing changed {} {}".format(self.axes_prev_val[axis],joy_state.axes[axis]))
+                self.axes_prev_val[axis] = joy_state.axes[axis]
             except IndexError:
+                self.node.get_logger().info("Indexerror {}".format(self.axes_prev_val[axis]))
                 # An index error can occur if this command is configured for multiple buttons
                 # like (0, 10), but the length of the joystick buttons is only 1.  Ignore these.
                 pass
@@ -127,7 +140,7 @@ class JoyTeleopCommand:
 class JoyTeleopTopicCommand(JoyTeleopCommand):
 
     def __init__(self, name: str, config: typing.Dict[str, typing.Any], node: Node) -> None:
-        super().__init__(name, config, 'deadman_buttons', 'deadman_axes')
+        super().__init__(name, config, 'deadman_buttons', 'deadman_axes', node)
 
         self.name = name
 
@@ -198,7 +211,6 @@ class JoyTeleopTopicCommand(JoyTeleopCommand):
             return
         if self.msg_value is not None and last_active == self.active:
             return
-
         if self.msg_value is not None:
             # This is the case for a static message.
             msg = self.msg_value
@@ -245,7 +257,7 @@ class JoyTeleopTopicCommand(JoyTeleopCommand):
 class JoyTeleopServiceCommand(JoyTeleopCommand):
 
     def __init__(self, name: str, config: typing.Dict[str, typing.Any], node: Node) -> None:
-        super().__init__(name, config, 'buttons', 'axes')
+        super().__init__(name, config, 'buttons', 'axes', node)
 
         self.name = name
 
@@ -294,7 +306,7 @@ class JoyTeleopServiceCommand(JoyTeleopCommand):
 class JoyTeleopActionCommand(JoyTeleopCommand):
 
     def __init__(self, name: str, config: typing.Dict[str, typing.Any], node: Node) -> None:
-        super().__init__(name, config, 'buttons', 'axes')
+        super().__init__(name, config, 'buttons', 'axes', node)
 
         self.name = name
 
