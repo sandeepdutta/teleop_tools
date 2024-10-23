@@ -79,7 +79,7 @@ class JoyTeleopCommand:
         self.buttons: typing.List[str] = []
         self.node = node
         if button_name in config:
-            self.buttons = [0] * len(config[button_name])
+            self.buttons = config[button_name]
             self.buttons_prev_val = config[button_name]
         self.axes: typing.List[str] = []
         if axes_name in config:
