@@ -2,6 +2,16 @@
 Changelog for package joy_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.6.0 (2024-10-01)
+------------------
+* Extend mapping to index of an array (`#76 <https://github.com/ros-teleop/teleop_tools/issues/76>`_)
+* Contributors: El Jawad Alaa
+
+1.5.1 (2024-09-02)
+------------------
+* Removed action tutorials interfaces dependency (`#88 <https://github.com/ros-teleop/teleop_tools/issues/88>`_)
+* Contributors: Alejandro Hernández Cordero
+
 1.5.0 (2023-11-01)
 ------------------
 * Fix deprecated topics on JTC (`#86 <https://github.com/ros-teleop/teleop_tools/issues/86>`_)
