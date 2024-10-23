@@ -2,6 +2,12 @@
 Changelog for package key_teleop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.6.0 (2024-10-01)
+------------------
+
+1.5.1 (2024-09-02)
+------------------
+
 1.5.0 (2023-11-01)
 ------------------
 * replace deprecated dash by underscore (`#85 <https://github.com/ros-teleop/teleop_tools/issues/85>`_)
